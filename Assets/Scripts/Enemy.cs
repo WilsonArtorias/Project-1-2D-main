@@ -27,6 +27,15 @@ public class Enemy : MonoBehaviour
     Rigidbody2D EnemyRB;
     #endregion
 
+    #region Ranged_Attack_variables
+    [Header("Ranged Enemy Settings")]
+    public bool isRanged = false;
+    public GameObject projectilePrefab;
+    public float attackRange = 5f;
+    public float shootCooldown = 1.5f;
+    private float shootTimer = 0f;
+    #endregion
+
     #region Unity_functions
 
     private void Awake() {
@@ -35,9 +44,25 @@ public class Enemy : MonoBehaviour
 
     private void Update() {
         /* TODO 2.1: Call Move() if player is !null */
+        
         if (player != null)
         {
-            Move();
+            float distance = Vector2.Distance(transform.position, player.position);
+            if (isRanged && distance <= attackRange)
+            {
+                EnemyRB.linearVelocity = Vector2.zero;
+                shootTimer -= Time.deltaTime;
+                if (shootTimer <= 0f)
+                    {
+                        ShootAtPlayer();
+                        shootTimer = shootCooldown;
+                    }
+
+            }
+            else{Move();}
+
+            
+
         }
         currHealth = maxHealth;
 
@@ -54,6 +79,18 @@ public class Enemy : MonoBehaviour
     #endregion
 
     #region Attack_functions
+
+    private void ShootAtPlayer()
+    {
+        if (projectilePrefab == null || player == null) return;
+        GameObject proj = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+        EnemyProjectile projScript = proj.GetComponent<EnemyProjectile>();
+        if (projScript != null)
+        {
+            Vector2 dir = ((Vector2)player.position - (Vector2)transform.position).normalized;
+            projScript.Launch(dir);
+        }
+    }
     private void Explode()
     {
         /* TODO 2.2: Explode should Debug.Log("Tons of Damage") if the player is within explosionRadius. 

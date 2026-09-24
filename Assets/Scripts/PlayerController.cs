@@ -24,6 +24,15 @@ public class PlayerController : MonoBehaviour
     #region Animation_components
     Animator anim;
     #endregion
+
+    #region dash
+    private float dashSpeed = 250f;     
+    private float dashDuration = 0.2f;   
+    private float dashCooldown = 1.5f;   
+    private bool isDashing = false;                        
+    private bool canDash = true;
+
+    #endregion
     
 
     #region Unity_functions
@@ -73,6 +82,10 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E))
         {
             Interact();
+        }
+        if ((Input.GetKeyDown(KeyCode.Space)) && canDash)
+        {
+            StartCoroutine(DashRoutine());
         }
     }
     #endregion
@@ -187,6 +200,7 @@ public class PlayerController : MonoBehaviour
     {
         /* TODO 3.1: Adjust currHealth when the player takes damage
         IMPORTANT: What happens when the player's health reaches 0? */
+        if (isDashing) return;
         currHealth -= value;
         Debug.Log("Player Health: " + currHealth);
 
@@ -253,6 +267,31 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+    }
+    private IEnumerator DashRoutine()
+    {
+        Debug.Log("<color=cyan>[Dash] 冲刺触发！</color>");
+        canDash = false;
+        isDashing = true;
+
+        Vector2 dashDir = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
+        
+        if (dashDir == Vector2.zero)
+        {
+            dashDir = currDirection != Vector2.zero ? currDirection : Vector2.down;
+        }
+        float elapsed = 0f;
+        while (elapsed < dashDuration)
+        {
+            PlayerRB.MovePosition(PlayerRB.position + dashDir * dashSpeed * Time.deltaTime);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        isDashing = false;
+
+        yield return new WaitForSeconds(dashCooldown);
+        canDash = true;
     }
     #endregion
 }
